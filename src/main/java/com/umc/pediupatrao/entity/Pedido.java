@@ -7,6 +7,16 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Document(collection = "pedidos")
 @Entity
 public class Pedido {
+    @lombok.Getter @lombok.Setter private java.util.List<ItemPedido> itens = new java.util.ArrayList<>();
+    @lombok.Getter @lombok.Setter private java.math.BigDecimal descontoPercentual = java.math.BigDecimal.ZERO;
+    @lombok.Getter @lombok.Setter private java.math.BigDecimal valorTotal;
+    @lombok.Getter @lombok.Setter private java.time.Instant entrada;
+    @lombok.Getter @lombok.Setter private java.time.Instant saida;
+    @lombok.Getter @lombok.Setter private String responsavelRegistro;
+    @lombok.Getter @lombok.Setter private String responsavelSaida;
+    @lombok.Getter @lombok.Setter private String justificativaCancelamento;
+    @org.springframework.data.annotation.Version
+    @lombok.Getter @lombok.Setter private Long versao;
     @Id
     private String id;
     private String clienteId;
