@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"><body><div th:fragment="content">
+<h2>Auditoria</h2>
+<div class="card card-body mb-3" th:each="evento : ${eventos}">
+<p><strong th:text="${evento.operacao}"></strong> | <span th:text="${evento.dataHora}"></span></p>
+<p>Usuário: <span th:text="${evento.usuario}"></span> | Perfil: <span th:text="${evento.perfil}"></span></p>
+<p>Entidade: <span th:text="${evento.entidade}"></span> | ID: <span th:text="${evento.entidadeId}"></span></p>
+<table class="table"><thead><tr><th>Campo</th><th>Anterior</th><th>Novo</th></tr></thead>
+<tbody><tr th:each="campo : ${evento.campos}"><td th:text="${campo.key}"></td><td th:text="${campo.value.anterior}"></td><td th:text="${campo.value.novo}"></td></tr></tbody></table>
+<p th:if="${evento.justificativa != null}" th:text="${evento.justificativa}"></p>
+</div><p th:if="${#lists.isEmpty(eventos)}">Nenhum evento registrado.</p>
+</div></body></html>

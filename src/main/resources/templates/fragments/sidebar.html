@@ -15,7 +15,7 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" th:href="@{/clientes}">
+                        <a th:if="${perfil == 'ATENDENTE' or perfil == 'GERENTE'}" class="nav-link" th:href="@{/clientes}">
                             <i class="bi bi-person-raised-hand"></i><span class="d-none d-md-inline">&nbsp;Clientes</span>
                         </a>
                     </li>
@@ -51,7 +51,7 @@
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" th:href="@{/usuarios}">
+                                <a th:if="${perfil == 'ADMIN'}" class="nav-link" th:href="@{/usuarios}">
                                     <i class="bi bi-people-fill"></i><span class="d-none d-md-inline">&nbsp;Usuários</span>
                                 </a>
                             </li>
@@ -59,6 +59,10 @@
                 </ul>
                 </li>
                 </ul>
+                <a th:if="${perfil == 'ADMIN' or perfil == 'GERENTE'}" class="nav-link" th:href="@{/auditoria}">Auditoria</a>
+                <form th:action="@{/logout}" method="post" class="px-3">
+                    <button class="btn btn-outline-light">Sair</button>
+                </form>
             </div>
         </div>
     </body>

@@ -13,7 +13,7 @@
             <div th:replace="~{fragments/sidebar :: sidebar}"></div>
         </aside>
 
-        <div class="container mt-5">
+        <div class="container mt-5" th:fragment="content">
             <h1 class="mb-4">Gestão de Produtos</h1>
 
             <!-- Botão para abrir o formulário -->
@@ -24,7 +24,7 @@
             <!-- Formulário de Cadastro -->
             <div class="collapse" id="formularioProduto">
                 <div class="card card-body">
-                    <form th:action="@{/api/produtos}" method="post" id="produtoForm">
+                    <form th:action="@{/produtos/salvar}" method="post" id="produtoForm">
                         <div class="mb-3">
                             <label for="nome" class="form-label">Nome do Produto</label>
                             <input type="text" id="nome" name="nome" class="form-control" placeholder="Nome do Produto" required>

@@ -1,77 +1,61 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <title>Lista de Pedidos</title>
-</head>
-<body>
-
-<div th:fragment="content">
-
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="fw-bold mb-0">
-            <i class="bi bi-bag me-2 text-primary"></i>Pedidos
-        </h2>
-    </div>
-
-    <!-- Mensagens de feedback -->
-    <div class="alert alert-success alert-dismissible fade show" th:if="${sucesso}" role="alert">
-        <i class="bi bi-check-circle-fill me-2"></i>
-        <span th:text="${sucesso}"></span>
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-    <div class="alert alert-danger alert-dismissible fade show" th:if="${erro}" role="alert">
-        <i class="bi bi-exclamation-triangle-fill me-2"></i>
-        <span th:text="${erro}"></span>
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-
-    <!-- Tabela -->
-    <div class="card shadow-sm">
-        <div class="card-body p-0">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-dark">
-                    <tr>
-                        <th class="ps-4">ID</th>
-                        <th>Cliente ID</th>
-                        <th>Tipo de Pizza</th>
-                        <th>Sabor</th>
-                        <th>Quantidade</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- Lista vazia -->
-                    <tr th:if="${#lists.isEmpty(pedidos)}">
-                        <td colspan="6" class="text-center text-muted py-5">
-                            <i class="bi bi-inbox fs-3 d-block mb-2"></i>
-                            Nenhum pedido encontrado.
-                        </td>
-                    </tr>
-                    <!-- Linhas -->
-                    <tr th:each="pedido : ${pedidos}">
-                        <td class="ps-4 text-muted" th:text="${pedido.id}"></td>
-                        <td th:text="${pedido.clienteId}"></td>
-                        <td th:text="${pedido.tipoPizza}"></td>
-                        <td th:text="${pedido.sabor}"></td>
-                        <td th:text="${pedido.quantidade}"></td>
-                        <td>
-                            <span class="badge"
-                                  th:classappend="${pedido.status == 'ENTREGUE'} ? 'bg-success' :
-                                                  (${pedido.status == 'CANCELADO'} ? 'bg-danger' :
-                                                  (${pedido.status == 'EM_PREPARO'} ? 'bg-warning text-dark' : 'bg-secondary'))"
-                                  th:text="${pedido.status}">
-                            </span>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-        <div class="card-footer text-muted small" th:if="${!#lists.isEmpty(pedidos)}">
-            Total: <strong th:text="${#lists.size(pedidos)}"></strong> pedido(s)
-        </div>
-    </div>
-
+<html xmlns:th="http://www.thymeleaf.org"><body><div th:fragment="content">
+<h2>Pedidos</h2>
+<form th:if="${perfil == 'ATENDENTE'}" th:action="@{/pedidos/salvar}" method="post" class="card card-body mb-3">
+ <label>Cliente <select name="clienteId" class="form-select" required>
+  <option th:each="cliente : ${clientes}" th:value="${cliente.id}" th:text="${cliente.nome}"></option>
+ </select></label>
+ <div id="itens-pedido">
+  <div class="d-flex gap-2 my-2 item-pedido">
+   <select name="itens[0].produtoId" class="form-select" required>
+    <option th:each="produto : ${produtos}" th:if="${produto.ativo == true}" th:value="${produto.id}" th:text="${produto.nome + ' — R$ ' + produto.preco}"></option>
+   </select>
+   <input name="itens[0].quantidade" type="number" min="1" value="1" required class="form-control" aria-label="Quantidade">
+  </div>
+ </div>
+ <button type="button" id="adicionar-item" class="btn btn-outline-secondary my-2">Adicionar item</button>
+ <button class="btn btn-primary">Registrar pedido</button>
+</form>
+<div class="card card-body mb-3" th:each="pedido : ${pedidos}">
+ <h5 th:text="${pedido.id}"></h5>
+ <p>Cliente: <span th:text="${pedido.clienteId}"></span> | Status: <strong th:text="${pedido.status}"></strong></p>
+ <ul><li th:each="item : ${pedido.itens}" th:text="${item.quantidade + ' × ' + item.nome + ' — R$ ' + item.precoUnitario}"></li></ul>
+ <p th:if="${#lists.isEmpty(pedido.itens)}" th:text="${pedido.tipoPizza + ' / ' + pedido.sabor + ' / Quantidade: ' + pedido.quantidade}"></p>
+ <p>Total: R$ <span th:text="${pedido.valorTotal}"></span> | Desconto: <span th:text="${pedido.descontoPercentual}"></span>%</p>
+ <p>Entrada: <span th:text="${pedido.entrada}"></span> | Responsável: <span th:text="${pedido.responsavelRegistro}"></span></p>
+ <p th:if="${pedido.saida != null}">Saída: <span th:text="${pedido.saida}"></span> | Responsável: <span th:text="${pedido.responsavelSaida}"></span></p>
+ <p th:if="${pedido.justificativaCancelamento != null}">Justificativa: <span th:text="${pedido.justificativaCancelamento}"></span></p>
+ <div th:if="${perfil == 'GERENTE'}">
+  <form th:if="${pedido.status == 'RECEBIDO' or pedido.status == 'EM_PREPARACAO' or pedido.status == 'PRONTO' or pedido.status == 'SAIU_PARA_ENTREGA' or pedido.status == 'RETIRADO'}" th:action="@{/pedidos/{id}/status(id=${pedido.id})}" method="post" class="d-flex gap-2 mb-2">
+   <select name="status" class="form-select">
+    <option th:if="${pedido.status == 'RECEBIDO'}" value="EM_PREPARACAO">Em preparação</option>
+    <option th:if="${pedido.status == 'EM_PREPARACAO'}" value="PRONTO">Pronto</option>
+    <option th:if="${pedido.status == 'PRONTO'}" value="SAIU_PARA_ENTREGA">Saiu para entrega</option>
+    <option th:if="${pedido.status == 'PRONTO'}" value="RETIRADO">Retirado</option>
+    <option th:if="${pedido.status == 'SAIU_PARA_ENTREGA' or pedido.status == 'RETIRADO'}" value="FINALIZADO">Finalizado</option>
+   </select><button class="btn btn-primary">Atualizar status</button>
+  </form>
+  <div th:if="${pedido.status == 'RECEBIDO' or pedido.status == 'EM_PREPARACAO' or pedido.status == 'PRONTO'}">
+   <form th:action="@{/pedidos/{id}/desconto(id=${pedido.id})}" method="post" class="d-flex gap-2 mb-2">
+    <input name="percentual" type="number" min="0" max="20" step="0.01" required class="form-control" aria-label="Desconto percentual" placeholder="Desconto (%)">
+    <button class="btn btn-outline-primary">Aplicar desconto</button>
+   </form>
+   <form th:action="@{/pedidos/{id}/cancelamento(id=${pedido.id})}" method="post" class="d-flex gap-2">
+    <input name="justificativa" required class="form-control" aria-label="Justificativa do cancelamento" placeholder="Justificativa">
+    <button class="btn btn-danger">Cancelar pedido</button>
+   </form>
+  </div>
+ </div>
 </div>
-
-</body>
-</html>
+<p th:if="${#lists.isEmpty(pedidos)}">Nenhum pedido encontrado.</p>
+<script>
+document.getElementById('adicionar-item')?.addEventListener('click', () => {
+ const container = document.getElementById('itens-pedido');
+ const item = container.firstElementChild.cloneNode(true);
+ const indice = container.children.length;
+ item.querySelectorAll('[name]').forEach(input => input.name = input.name.replace('[0]', '[' + indice + ']'));
+ item.querySelector('input').value = 1;
+ container.appendChild(item);
+});
+</script>
+</div></body></html>
