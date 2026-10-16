@@ -28,5 +28,10 @@ public class MongoInitConfig implements CommandLineRunner {
         if (!mongoTemplate.collectionExists("horariosAtendimento")) {
             mongoTemplate.createCollection("horariosAtendimento");
         }
+        mongoTemplate.updateMulti(
+                org.springframework.data.mongodb.core.query.Query.query(
+                        org.springframework.data.mongodb.core.query.Criteria.where("versao").exists(false)),
+                org.springframework.data.mongodb.core.query.Update.update("versao", 0L),
+                com.umc.pediupatrao.entity.Pedido.class);
     }
 }

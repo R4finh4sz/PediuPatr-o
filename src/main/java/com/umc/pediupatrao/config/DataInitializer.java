@@ -11,16 +11,21 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 public class DataInitializer {
 
     @Bean
-    CommandLineRunner initDatabase(UsuarioRepository repo) {
+    CommandLineRunner initDatabase(UsuarioRepository repo,
+            @org.springframework.beans.factory.annotation.Value("${app.admin-password:}") String senha) {
         return args -> {
 
-            if (repo.findByUsername("admin").isEmpty()) {
+            if (repo.count() == 0) {
+                if (senha.isBlank()) {
+                    throw new IllegalStateException("Defina ADMIN_PASSWORD para criar o administrador inicial.");
+                }
 
                 BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 
                 Usuario user = new Usuario();
                 user.setUsername("admin");
-                user.setPassword(encoder.encode("teste123"));
+                user.setRole("ADMIN");
+                user.setPassword(encoder.encode(senha));
 
                 repo.save(user);
 
