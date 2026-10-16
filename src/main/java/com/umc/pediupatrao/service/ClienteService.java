@@ -2,48 +2,78 @@ package com.umc.pediupatrao.service;
 
 import com.umc.pediupatrao.entity.Cliente;
 import com.umc.pediupatrao.repository.ClienteRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class ClienteService {
+    private final ClienteRepository clientes;
+    private final AuditoriaService auditoria;
 
-    @Autowired
-    private ClienteRepository clienteRepository;
+    public ClienteService(ClienteRepository clientes, AuditoriaService auditoria) {
+        this.clientes = clientes;
+        this.auditoria = auditoria;
+    }
 
+    @PreAuthorize("hasRole('ATENDENTE')")
     public Cliente novoCliente(Cliente cliente) {
-        return clienteRepository.save(cliente);
+        return salvar(cliente);
     }
 
+    @PreAuthorize("hasAnyRole('ATENDENTE', 'GERENTE')")
     public List<Cliente> listarClientes() {
-        return clienteRepository.findAll();
+        return clientes.findAll();
     }
 
-    // Método para excluir cliente
+    @PreAuthorize("hasRole('ATENDENTE')")
     public void excluir(String id) {
-        clienteRepository.deleteById(id);
+        Cliente cliente = clientes.findById(id).orElseThrow(() ->
+                new ResponseStatusException(HttpStatus.NOT_FOUND, "Cliente não encontrado."));
+        clientes.deleteById(id);
+        auditoria.registrar("EXCLUSAO_CLIENTE", "Cliente", id, dados(cliente), Map.of(), null);
     }
 
+    @PreAuthorize("hasAnyRole('ATENDENTE', 'GERENTE')")
     public Optional<Cliente> buscarPorId(String id) {
-        return clienteRepository.findById(id);
+        return clientes.findById(id);
     }
 
-    // Método para salvar um novo cliente ou atualizar um cliente existente
+    @PreAuthorize("hasRole('ATENDENTE')")
     public Cliente salvar(Cliente cliente) {
-        // Se o cliente não tem ID (novo cliente), salva como novo
-        if (cliente.getId() == null) {
-            return clienteRepository.save(cliente);  // Cria um novo cliente
-        } // Se já tem ID (cliente existente), atualiza
-        else {
-            // Verifica se o cliente existe antes de atualizar
-            if (clienteRepository.existsById(cliente.getId())) {
-                return clienteRepository.save(cliente);  // Atualiza o cliente existente
-            } else {
-                throw new IllegalArgumentException("Cliente não encontrado para atualização.");
-            }
+        if (cliente.getNome() == null || cliente.getNome().isBlank()
+                || cliente.getTelefone() == null || cliente.getTelefone().isBlank()) {
+            throw new IllegalArgumentException("Nome e telefone são obrigatórios.");
         }
+        if (cliente.getId() != null && cliente.getId().isBlank()) {
+            cliente.setId(null);
+        }
+        Map<String, Object> antes = cliente.getId() == null ? Map.of()
+                : dados(clientes.findById(cliente.getId()).orElseThrow(() ->
+                        new ResponseStatusException(HttpStatus.NOT_FOUND, "Cliente não encontrado.")));
+        Cliente salvo = clientes.save(cliente);
+        auditoria.registrar(antes.isEmpty() ? "INCLUSAO_CLIENTE" : "ALTERACAO_CLIENTE",
+                "Cliente", salvo.getId(), antes, dados(salvo), null);
+        return salvo;
     }
 
+    private Map<String, Object> dados(Cliente cliente) {
+        Map<String, Object> dados = new LinkedHashMap<>();
+        dados.put("nome", cliente.getNome());
+        dados.put("telefone", cliente.getTelefone());
+        dados.put("cep", cliente.getCep());
+        dados.put("logradouro", cliente.getLogradouro());
+        dados.put("numero", cliente.getNumero());
+        dados.put("complemento", cliente.getComplemento());
+        dados.put("bairro", cliente.getBairro());
+        dados.put("cidade", cliente.getCidade());
+        dados.put("estado", cliente.getEstado());
+        dados.put("endereco", cliente.getEndereco());
+        return dados;
+    }
 }

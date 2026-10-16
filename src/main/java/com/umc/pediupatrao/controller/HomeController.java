@@ -116,9 +116,38 @@ public class HomeController {
     public String pedidos(Model model) {
         List<Pedido> pedidos = pedidoService.listarPedidos();
         model.addAttribute("pedidos", pedidos);
+        var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ATENDENTE"))) {
+            model.addAttribute("clientes", clienteService.listarClientes());
+            model.addAttribute("produtos", produtoService.listarProdutos());
+        }
         model.addAttribute("content", "pedidos :: content");
         log.info("Carregando fragmento: pedidos :: content");
         return "layout";
+    }
+
+    @PostMapping("/pedidos/salvar")
+    public String criarPedido(@ModelAttribute Pedido pedido) {
+        pedidoService.criarPedido(pedido);
+        return "redirect:/pedidos";
+    }
+
+    @PostMapping("/pedidos/{id}/status")
+    public String statusPedido(@PathVariable String id, @org.springframework.web.bind.annotation.RequestParam String status) {
+        pedidoService.atualizarStatus(id, status);
+        return "redirect:/pedidos";
+    }
+
+    @PostMapping("/pedidos/{id}/desconto")
+    public String descontoPedido(@PathVariable String id, @org.springframework.web.bind.annotation.RequestParam java.math.BigDecimal percentual) {
+        pedidoService.aplicarDesconto(id, percentual);
+        return "redirect:/pedidos";
+    }
+
+    @PostMapping("/pedidos/{id}/cancelamento")
+    public String cancelarPedido(@PathVariable String id, @org.springframework.web.bind.annotation.RequestParam String justificativa) {
+        pedidoService.cancelar(id, justificativa);
+        return "redirect:/pedidos";
     }
 
     // ========================
@@ -131,6 +160,12 @@ public class HomeController {
         model.addAttribute("content", "produtos/lista :: content");
         log.info("Carregando fragmento: produtos/lista :: content");
         return "layout";
+    }
+
+    @PostMapping("/produtos/salvar")
+    public String salvarProduto(@ModelAttribute Produto produto) {
+        produtoService.salvar(produto);
+        return "redirect:/produtos";
     }
 
     // ========================
@@ -150,6 +185,12 @@ public class HomeController {
         model.addAttribute("cliente", new Cliente());
         model.addAttribute("content", "clientes/form :: content");
         return "layout";
+    }
+
+    @PostMapping("/clientes/deletar/{id}")
+    public String excluirCliente(@PathVariable String id) {
+        clienteService.excluir(id);
+        return "redirect:/clientes";
     }
 
     @PostMapping("/clientes/salvar")

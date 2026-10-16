@@ -45,10 +45,8 @@ public class UsuarioController {
         Optional<Usuario> usuarioExistente = usuarioService.buscarPorId(id);
 
         if (usuarioExistente.isPresent()) {
-            Usuario usuario = usuarioExistente.get();
-            usuario.setUsername(usuarioAtualizado.getUsername());
-            usuario.setPassword(usuarioAtualizado.getPassword());
-            usuarioService.salvarUsuario(usuario);
+            usuarioService.atualizarUsuario(id, usuarioAtualizado);
+            Usuario usuario = usuarioService.buscarPorId(id).orElseThrow();
 
             return ResponseEntity.ok(usuario);
         } else {
