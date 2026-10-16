@@ -27,6 +27,13 @@ public class PedidoController {
     public Pedido atualizarStatus(@PathVariable String id, @RequestParam String status) {
         return pedidoService.atualizarStatus(id, status);
     }
-    
-    
+    @PutMapping("/{id}/desconto")
+    public Pedido aplicarDesconto(@PathVariable String id, @RequestParam java.math.BigDecimal percentual) {
+        return pedidoService.aplicarDesconto(id, percentual);
+    }
+
+    @PutMapping("/{id}/cancelamento")
+    public Pedido cancelar(@PathVariable String id, @RequestParam String justificativa) {
+        return pedidoService.cancelar(id, justificativa);
+    }
 }
