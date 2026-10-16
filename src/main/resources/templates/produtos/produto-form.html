@@ -5,6 +5,7 @@
     <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body>
+    <div th:fragment="content" class="card card-body">
     <h1 th:text="${produto.id == null ? 'Novo Produto' : 'Editar Produto'}"></h1>
     <form th:action="@{/produtos/salvar}" th:object="${produto}" method="post">
         <input type="hidden" th:field="*{id}" />
@@ -22,12 +23,13 @@
         </div>
         <div>
             <label for="ativo">Ativo</label>
-            <textarea id="ativo" th:field="*{ativo}"></textarea>
+            <input type="checkbox" id="ativo" th:field="*{ativo}" />
         </div>
         <div>
             <button type="submit">Salvar</button>
             <a href="/produtos">Cancelar</a>
         </div>
     </form>
+    </div>
 </body>
 </html>

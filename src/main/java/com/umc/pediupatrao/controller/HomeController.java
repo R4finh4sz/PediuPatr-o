@@ -168,6 +168,13 @@ public class HomeController {
         return "redirect:/produtos";
     }
 
+    @GetMapping("/produtos/editar/{id}")
+    public String editarProduto(@PathVariable String id, Model model) {
+        model.addAttribute("produto", produtoService.buscarPorId(id));
+        model.addAttribute("content", "produtos/produto-form :: content");
+        return "layout";
+    }
+
     // ========================
     // CLIENTES
     // ========================

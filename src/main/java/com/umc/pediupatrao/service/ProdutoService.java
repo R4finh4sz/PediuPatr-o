@@ -20,6 +20,12 @@ public class ProdutoService {
         return produtoRepository.findAll();
     }
 
+    public Produto buscarPorId(String id) {
+        return produtoRepository.findById(id).orElseThrow(() ->
+                new org.springframework.web.server.ResponseStatusException(
+                        org.springframework.http.HttpStatus.NOT_FOUND, "Produto não encontrado."));
+    }
+
     // Método para excluir cliente
     public void excluir(String id) {
         produtoRepository.deleteById(id);

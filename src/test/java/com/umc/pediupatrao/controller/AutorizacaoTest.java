@@ -20,6 +20,34 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest({PedidoController.class,UsuarioController.class,ClienteController.class,AuditoriaController.class,HomeController.class})
 @Import({SecurityConfig.class,UsuarioDetailsService.class,PedidoService.class,ClienteService.class,UsuarioService.class,AuditoriaService.class,ProdutoService.class})
 class AutorizacaoTest {
+ @ParameterizedTest @ValueSource(strings={"ADMIN","GERENTE","ATENDENTE"})
+ void edicaoProdutoCarregaESalvaProdutoExistente(String perfil) throws Exception {
+  Produto produto=new Produto(); produto.setId("p1"); produto.setNome("Pizza original"); produto.setTipo("Pizza"); produto.setPreco(30.0); produto.setAtivo(true);
+  when(produtos.findById("p1")).thenReturn(Optional.of(produto));
+  when(produtos.existsById("p1")).thenReturn(true);
+  when(produtos.save(any())).thenAnswer(i->i.getArgument(0));
+  mvc.perform(get("/produtos/editar/p1").with(user("usuario").roles(perfil))).andExpect(status().isOk())
+   .andExpect(content().string(org.hamcrest.Matchers.containsString("Pizza original")))
+   .andExpect(content().string(org.hamcrest.Matchers.containsString("type=\"checkbox\"")))
+   .andExpect(content().string(org.hamcrest.Matchers.containsString("name=\"_csrf\"")));
+  mvc.perform(post("/produtos/salvar").with(user("usuario").roles(perfil)).with(csrf())
+   .param("id","p1").param("nome","Pizza alterada").param("tipo","Pizza").param("preco","35.50").param("_ativo","on"))
+   .andExpect(status().is3xxRedirection()).andExpect(redirectedUrl("/produtos"));
+  verify(produtos).save(argThat(p->"p1".equals(p.getId()) && "Pizza alterada".equals(p.getNome())
+   && Double.valueOf(35.50).equals(p.getPreco()) && Boolean.FALSE.equals(p.getAtivo())));
+ }
+ @Test void editarProdutoInexistenteRetorna404() throws Exception {
+  mvc.perform(get("/produtos/editar/inexistente").with(user("gerente").roles("GERENTE"))).andExpect(status().isNotFound());
+ }
+ @ParameterizedTest @ValueSource(strings={"ATIVO","INATIVO","SEM_STATUS"})
+ void listaProdutosAceitaStatusAtivoAusente(String estado) throws Exception {
+  Produto produto=new Produto(); produto.setId("produto1"); produto.setNome("Pizza teste"); produto.setPreco(30.0);
+  produto.setAtivo("SEM_STATUS".equals(estado)?null:"ATIVO".equals(estado));
+  when(produtos.findAll()).thenReturn(List.of(produto));
+  mvc.perform(get("/produtos").with(user("gerente").roles("GERENTE"))).andExpect(status().isOk())
+   .andExpect(content().string(org.hamcrest.Matchers.containsString("Pizza teste")))
+   .andExpect(content().string(org.hamcrest.Matchers.containsString("ATIVO".equals(estado)?"<td>Sim</td>":"<td>Não</td>")));
+ }
  @Autowired MockMvc mvc;
  @MockitoBean PedidoRepository pedidos;
  @MockitoBean ProdutoRepository produtos;
